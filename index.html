@@ -72,7 +72,7 @@
     <h1>הגדרה: "מה הקשר?"</h1>
     <p class="subtitle">אמא, מלאי 4 קבוצות של 4 מילים, ואז כתבי הודעת סיום:</p>
 
-    <div class="group group-green">
+    <div class="group game-group group-green">
         <h2>קבוצה 1 (קשר קל - ירוק)</h2>
         <input type="hidden" class="diff" value="green">
         <input type="text" class="cat" placeholder="מה הקשר? (למשל: סוגי עוגות)">
@@ -84,7 +84,7 @@
         </div>
     </div>
 
-    <div class="group group-yellow">
+    <div class="group game-group group-yellow">
         <h2>קבוצה 2 (קל בינוני - צהוב)</h2>
         <input type="hidden" class="diff" value="yellow">
         <input type="text" class="cat" placeholder="מה הקשר?">
@@ -96,7 +96,7 @@
         </div>
     </div>
 
-    <div class="group group-orange">
+    <div class="group game-group group-orange">
         <h2>קבוצה 3 (בינוני - כתום)</h2>
         <input type="hidden" class="diff" value="orange">
         <input type="text" class="cat" placeholder="מה הקשר?">
@@ -108,7 +108,7 @@
         </div>
     </div>
 
-    <div class="group group-red">
+    <div class="group game-group group-red">
         <h2>קבוצה 4 (קשה - אדום)</h2>
         <input type="hidden" class="diff" value="red">
         <input type="text" class="cat" placeholder="מה הקשר?">
@@ -180,7 +180,8 @@
     }
 
     function generateLink() {
-        const groups = document.querySelectorAll('.group:not(:last-of-type)'); // כל הקבוצות חוץ מההודעה
+        // התיקון: אנחנו אוספים רק את הקבוצות שיש להן את המחלקה game-group
+        const groups = document.querySelectorAll('.game-group'); 
         let data = [];
         let valid = true;
         
@@ -237,6 +238,7 @@
         } catch (error) {
             errorMsg.innerText = 'הייתה בעיה ביצירת הקישור. נסה לרענן את העמוד.';
             errorMsg.classList.remove('hidden');
+            console.error(error);
         }
     }
 
@@ -248,7 +250,7 @@
     }
 
     function initGame(payload) {
-        // תמיכה בגרסאות ישנות של הלינק (אם שומרים לינק ישן)
+        // תמיכה בגרסאות ישנות של הלינק
         if (Array.isArray(payload)) {
             gameData = payload;
             endGameMessage = "כל הכבוד! סיימתם את המשחק בהצלחה!";
@@ -312,9 +314,8 @@
         document.getElementById('attempts-count').innerText = attemptsCount;
 
         let matchIndex = -1;
-        let maxOverlap = 0; // משתנה שיבדוק כמה ניחשו נכון מקבוצה בודדת
+        let maxOverlap = 0;
 
-        // בדיקת ההתאמה והחפיפה הגבוהה ביותר
         for (let i = 0; i < gameData.length; i++) {
             let overlap = gameData[i].w.filter(w => selected.includes(w)).length;
             if (overlap > maxOverlap) {
@@ -331,7 +332,6 @@
             selected = [];
             renderGrid();
             
-            // בדיקת ניצחון
             if (gameData.length === 0) {
                 setTimeout(() => {
                     document.getElementById('game-board-area').classList.add('hidden');
@@ -344,12 +344,11 @@
             selected = [];
             renderGrid();
             
-            // הרכבת הודעת השגיאה בהתאם לכמות הניחושים הנכונים
             let errorText = "טעות! איזה מצחיקה את....";
             if (maxOverlap === 3) {
-                errorText += " (3/4)";
+                errorText += " עלית על 3 מילים מתוך 4!";
             } else if (maxOverlap === 2) {
-                errorText += " (2/4)";
+                errorText += " עלית על 2 מילים מתוך 4!";
             }
             
             showToast(errorText);
