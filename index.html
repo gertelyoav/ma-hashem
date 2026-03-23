@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק מה הקשר</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #1a73e8; }
+        input { width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .hidden { display: none; }
+        .word-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .word-item { background: #e8f0fe; padding: 15px; border-radius: 8px; font-weight: bold; }
+        .answer { color: #d93025; font-weight: bold; margin-top: 20px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+<div id="setup-screen" class="card">
+    <h1>הגדרת המשחק</h1>
+    <p>אמא, תכתבי 4 מילים והקשר ביניהן:</p>
+    <input type="text" id="w1" placeholder="מילה 1">
+    <input type="text" id="w2" placeholder="מילה 2">
+    <input type="text" id="w3" placeholder="מילה 3">
+    <input type="text" id="w4" placeholder="מילה 4">
+    <input type="text" id="connection" placeholder="מה הקשר?">
+    <br>
+    <button onclick="startGame()">סיים והתחל משחק</button>
+</div>
+
+<div id="game-screen" class="card hidden">
+    <h1>מה הקשר?</h1>
+    <div class="word-grid">
+        <div id="display-w1" class="word-item"></div>
+        <div id="display-w2" class="word-item"></div>
+        <div id="display-w3" class="word-item"></div>
+        <div id="display-w4" class="word-item"></div>
+    </div>
+    <button id="reveal-btn" onclick="revealAnswer()">גלה את התשובה</button>
+    <div id="answer-display" class="answer hidden"></div>
+    <br>
+    <button onclick="resetGame()" style="background: #5f6368;">משחק חדש</button>
+</div>
+
+<script>
+    function startGame() {
+        const words = [
+            document.getElementById('w1').value,
+            document.getElementById('w2').value,
+            document.getElementById('w3').value,
+            document.getElementById('w4').value
+        ];
+        const connection = document.getElementById('connection').value;
+
+        if (words.some(w => w === "") || connection === "") {
+            alert("נא למלא את כל השדות!");
+            return;
+        }
+
+        // עדכון מסך המשחק
+        words.forEach((w, i) => {
+            document.getElementById(`display-w${i+1}`).innerText = w;
+        });
+        document.getElementById('answer-display').innerText = "הקשר הוא: " + connection;
+
+        // מעבר מסך
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+    }
+
+    function revealAnswer() {
+        document.getElementById('answer-display').classList.remove('hidden');
+        document.getElementById('reveal-btn').classList.add('hidden');
+    }
+
+    function resetGame() {
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
