@@ -3,82 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק מה הקשר</title>
+    <title>משחק מה הקשר - קשרים</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h1 { color: #1a73e8; }
-        input { width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
-        button { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .hidden { display: none; }
-        .word-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .word-item { background: #e8f0fe; padding: 15px; border-radius: 8px; font-weight: bold; }
-        .answer { color: #d93025; font-weight: bold; margin-top: 20px; font-size: 1.2em; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; color: #333; }
+        .container { width: 90%; max-width: 450px; padding: 20px; text-align: center; }
+        h1 { color: #1a1a1a; margin-top: 0; font-size: 24px; }
+        .hidden { display: none !important; }
+
+        /* --- Admin Screen Style --- */
+        #admin-screen .group { border: 1px solid #ddd; padding: 15px; border-radius: 12px; background: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: right; }
+        #admin-screen h2 { margin-top: 0; color: #555; font-size: 18px; }
+        #admin-screen input { width: 100%; padding: 10px; margin: 5px 0 10px; border: 1px solid #ccc; border-radius: 8px; box-size: border-box; font-size: 14px; }
+        #admin-screen select { padding: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; margin-bottom: 10px; width: 100%; box-sizing: border-box;}
+        #create-link-btn { background: #3498db; color: white; border: none; padding: 15px 30px; border-radius: 20px; font-size: 18px; cursor: pointer; font-weight: bold; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #final-link-box { background: white; border: 1px solid #2ecc71; color: #2ecc71; padding: 15px; border-radius: 12px; margin-top: 20px; word-break: break-all; font-weight: bold; }
+
+        /* --- Game Screen Style --- */
+        #game-header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; width: 100%; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; background: white; border-radius: 15px; padding: 10px 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
+        #shuffle-btn { background: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: bold;}
+        #check-btn { font-size: 20px; font-weight: bold; color: #1a1a1a; cursor: pointer; }
+        #check-btn .icon { vertical-align: middle; margin-right: 5px;}
+        #attempts-label { color: #d93025; font-weight: bold; font-size: 14px; text-align: left; grid-column: 3;}
+        
+        .words-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; }
+        .word-cell { aspect-ratio: 1; background: #e8f0fe; color: #1a73e8; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.2s; -webkit-user-select: none; user-select: none; }
+        .word-cell.selected { background: #1a73e8 !important; color: white !important; font-size: 1.2em; font-weight: 800;}
+        .word-cell.difficulty-green { background: #c3e6cb; color: #155724;}
+        .word-cell.difficulty-yellow { background: #ffeeba; color: #856404;}
+        .word-cell.difficulty-orange { background: #fed7aa; color: #c2410c;}
+        .word-cell.difficulty-red { background: #f8d7da; color: #721c24;}
+        
+        .completed-group { grid-column: span 4; display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; border-radius: 10px; padding: 10px; text-align: center; }
+        .completed-category { font-weight: bold; font-size: 18px; margin-bottom: 5px; text-transform: uppercase;}
+        .completed-words { font-size: 14px; opacity: 0.8;}
+
+        #instructions-small { color: #d93025; font-size: 12px; margin-top: 20px; font-weight: bold;}
+        .menu-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px;}
+        .menu-btn { background: #5f6368; color: white; border: none; padding: 10px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: bold;}
+        .menu-btn .icon { margin-left: 5px;}
+
+        /* --- Popup Instructions --- */
+        #how-to-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;}
+        .popup-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: right; position: relative; max-height: 80vh; overflow-y: auto;}
+        .close-popup { position: absolute; top: 15px; left: 15px; font-size: 24px; color: #999; cursor: pointer;}
+        #how-to-popup h2 { text-align: center; margin-top: 0;}
+        #how-to-popup ul { padding-right: 20px;}
+        #how-to-popup li { margin-bottom: 10px;}
     </style>
 </head>
 <body>
 
-<div id="setup-screen" class="card">
-    <h1>הגדרת המשחק</h1>
-    <p>אמא, תכתבי 4 מילים והקשר ביניהן:</p>
-    <input type="text" id="w1" placeholder="מילה 1">
-    <input type="text" id="w2" placeholder="מילה 2">
-    <input type="text" id="w3" placeholder="מילה 3">
-    <input type="text" id="w4" placeholder="מילה 4">
-    <input type="text" id="connection" placeholder="מה הקשר?">
-    <br>
-    <button onclick="startGame()">סיים והתחל משחק</button>
+<div class="container">
+    
+    <div id="admin-screen">
+        <h1>הגדרה: "מה הקשר?"</h1>
+        <p>אמא, מלאי 4 קבוצות של 4 מילים (סך הכל 16) והקשר ביניהן:</p>
+        
+        <div id="setup-container">
+            </div>
+
+        <button id="create-link-btn" onclick="generateGameLink()">צור לינק למשחק!</button>
+        <div id="final-link-box" class="hidden">
+            <p>שלחי את הלינק הזה לשחקן!</p>
+            <input type="text" id="game-url" readonly onclick="this.select()">
+        </div>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div id="game-header">
+            <button id="shuffle-btn" onclick="shuffleBoard()">ערבוב</button>
+            <div id="check-btn" onclick="checkSelection()"><span class="icon">✈</span> בדיקה</div>
+            <div id="attempts-label">ניסיונות: <span id="attempts-count">5</span></div>
+        </div>
+
+        <div id="game-board">
+            <div class="words-grid" id="main-grid">
+                </div>
+            <div id="completed-groups-container">
+                </div>
+        </div>
+
+        <p id="instructions-small">מצאו 4 מילים קשורות במכנה משותף, לחצו על 4 מילים ואז על כפתור בדיקה</p>
+        
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="resetAdminView()"><span class="icon">📅</span> בחירת לוח אחר</button>
+            <button class="menu-btn" onclick="showHowToPlay()"><span class="icon">ℹ</span> איך לשחק?</button>
+            <button class="menu-btn"><span class="icon">⚙</span> רמז (פרסומת)</button>
+        </div>
+    </div>
+
 </div>
 
-<div id="game-screen" class="card hidden">
-    <h1>מה הקשר?</h1>
-    <div class="word-grid">
-        <div id="display-w1" class="word-item"></div>
-        <div id="display-w2" class="word-item"></div>
-        <div id="display-w3" class="word-item"></div>
-        <div id="display-w4" class="word-item"></div>
+<div id="how-to-popup" class="hidden" onclick="hideHowToPlay(event)">
+    <div class="popup-content" onclick="event.stopPropagation()">
+        <span class="close-popup" onclick="hideHowToPlay()">✕</span>
+        <h2>הסבר על המשחק</h2>
+        <ul>
+            <li>מצאו קבוצות של 4 מילים שחולקות מכנה משותף.</li>
+            <li>בכל לוח יש 16 מילים, אותן יש לחלק לארבע קבוצות שונות.</li>
+            <li>לכל קבוצה יש פתרון אחד נכון.</li>
+            <li>יש מילים שיתאימו לשתי קבוצות או יותר, לכן עליכם לחשוב בצורה ייחודית ומקורית. כדי להתחיל סמנו 4 מילים ולחצו על בדיקה.</li>
+        </ul>
+        <h3>צבעי הקושי:</h3>
+        <ul>
+            <li><strong style="color: #27ae60;">ירוק</strong> - קשר קל</li>
+            <li><strong style="color: #f1c40f;">צהוב</strong> - קל בינוני</li>
+            <li><strong style="color: #e67e22;">כתום</strong> - בינוני</li>
+            <li><strong style="color: #c0392b;">אדום</strong> - קשה</li>
+        </ul>
+        <p>לחיצה על רמז תביא לכם קשר בין 2 מילים.</p>
+        <p>בהצלחה!</p>
     </div>
-    <button id="reveal-btn" onclick="revealAnswer()">גלה את התשובה</button>
-    <div id="answer-display" class="answer hidden"></div>
-    <br>
-    <button onclick="resetGame()" style="background: #5f6368;">משחק חדש</button>
 </div>
 
 <script>
-    function startGame() {
-        const words = [
-            document.getElementById('w1').value,
-            document.getElementById('w2').value,
-            document.getElementById('w3').value,
-            document.getElementById('w4').value
-        ];
-        const connection = document.getElementById('connection').value;
+    // --- נתוני הדגמה למסך ההגדרה ---
+    const demoData = [
+        { c: "סוגי יישובים", w: ["מושב", "קיבוץ", "עיר", "קרת"], d: "green" },
+        { c: "כלי נגינה", w: ["תופים", "גיטרה", "כינור", "פסנתר"], d: "yellow" },
+        { c: "צורות גיאומטריות", w: ["משולש", "צלחת", "תחתונים", "מגן"], d: "orange" },
+        { c: "תארים מלכותיים", w: ["המלך", "המגדל", "אגב", "ארץ"], d: "red" } // מילים שהן מסיחים
+    ];
 
-        if (words.some(w => w === "") || connection === "") {
-            alert("נא למלא את כל השדות!");
-            return;
-        }
+    // --- אתחול מסך הגדרה ---
+    const setupContainer = document.getElementById('setup-container');
+    const difficultyMap = { green: "קל", yellow: "קל-בינוני", orange: "בינוני", red: "קשה" };
 
-        // עדכון מסך המשחק
-        words.forEach((w, i) => {
-            document.getElementById(`display-w${i+1}`).innerText = w;
+    function renderSetupForm(data) {
+        setupContainer.innerHTML = '';
+        data.forEach((group, i) => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'group';
+            groupDiv.innerHTML = `
+                <h2>קבוצה ${i+1}:</h2>
+                <input type="text" placeholder="שם הקטגוריה (למשל: סוגי עוגות)" class="cat-input" value="${group.c}">
+                <select class="diff-input">
+                    ${Object.entries(difficultyMap).map(([key, value]) => `<option value="${key}" ${group.d === key ? 'selected' : ''}>${value}</option>`).join('')}
+                </select>
+                <div class="word-inputs">
+                    ${[1,2,3,4].map(j => `<input type="text" placeholder="מילה ${j}" class="word-input" value="${group.w[j-1] || ''}">`).join('')}
+                </div>
+            `;
+            setupContainer.appendChild(groupDiv);
         });
-        document.getElementById('answer-display').innerText = "הקשר הוא: " + connection;
-
-        // מעבר מסך
-        document.getElementById('setup-screen').classList.add('hidden');
-        document.getElementById('game-screen').classList.remove('hidden');
     }
 
-    function revealAnswer() {
-        document.getElementById('answer-display').classList.remove('hidden');
-        document.getElementById('reveal-btn').classList.add('hidden');
+    renderSetupForm(demoData);
+
+    // --- לוגיקה ליצירת הלינק ---
+    
+    function utoa(str) {
+        return window.btoa(unescape(encodeURIComponent(str)));
     }
 
-    function resetGame() {
-        location.reload();
-    }
-</script>
+    function generateGameLink() {
+        const groups = [];
+        const adminGroups = document.querySelectorAll('#admin-screen .group');
+        let allFilled = true;
 
-</body>
-</html>
+        adminGroups.forEach(groupDiv => {
+            const category = groupDiv.querySelector('.cat-input').value;
+            const difficulty = groupDiv.querySelector('.diff-input').value;
+            const words = Array.from(groupDiv.querySelectorAll('.word-input')).map(input => input.value);
+            
+            if (!category || !difficulty || words.some(w => !w)) allFilled = false;
+            groups.push({ c: category, w: words, d: difficulty });
+        });
+
+        if (!allFilled) return alert("יש למלא את כל השדות!");
+
+        const encoded = utoa(JSON.stringify(groups));
+        const finalUrl = window.location.origin + window.location.
