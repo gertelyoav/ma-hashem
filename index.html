@@ -6,7 +6,8 @@
     <title>משחק מה הקשר - קשרים אישיים</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; color: #333; box-sizing: border-box;}
-        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; overflow: hidden;}
+        /* הוספתי פה box-sizing: border-box כדי שהמסגרת לא תגלוש במובייל */
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; overflow: hidden; box-sizing: border-box;}
         h1 { text-align: center; color: #1a1a1a; margin-top: 0; }
         p.subtitle { text-align: center; color: #666; margin-bottom: 25px; }
         
@@ -36,18 +37,19 @@
         
         /* --- GAME SCREEN STYLES --- */
         #game-screen { width: 100%; max-width: 500px; }
-        #game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .game-btn { padding: 8px 15px; border: 1px solid #333; border-radius: 20px; background: white; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        #game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 5px; }
+        .game-btn { padding: 8px 12px; border: 1px solid #333; border-radius: 20px; background: white; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 13px; text-align: center; flex: 1; margin: 0 2px; white-space: nowrap;}
         .game-btn:hover { background: #f0f0f0; }
         
-        #stats-bar { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; color: #444; background: #f8f9fa; padding: 10px; border-radius: 10px;}
+        #stats-bar { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; color: #444; background: #f8f9fa; padding: 10px; border-radius: 10px; font-size: 14px;}
         
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .cell { background: #93c5fd; color: black; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: bold; border-radius: 8px; cursor: pointer; user-select: none; font-size: 14px; padding: 2px; transition: transform 0.1s;}
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        /* הוספתי פה word-break ו-overflow כדי שמילים ארוכות לא ישברו את הלוח */
+        .cell { background: #93c5fd; color: black; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: bold; border-radius: 8px; cursor: pointer; user-select: none; font-size: 14px; padding: 4px; transition: transform 0.1s; box-sizing: border-box; word-break: break-word; overflow: hidden; line-height: 1.1;}
         .cell:active { transform: scale(0.95); }
         .cell.selected { background: #4b5563; color: white; }
         
-        .solved-group { grid-column: span 4; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; animation: popIn 0.3s ease-out;}
+        .solved-group { grid-column: span 4; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; animation: popIn 0.3s ease-out; box-sizing: border-box;}
         .solved-cat { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
         .solved-words { font-size: 14px; }
         
@@ -57,7 +59,7 @@
         .bg-red { background: #fecaca; color: #991b1b; }
 
         /* הודעת קופצת (Toast) */
-        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: opacity 0.3s, transform 0.3s; pointer-events: none; text-align: center;}
+        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: opacity 0.3s, transform 0.3s; pointer-events: none; text-align: center; width: 90%; max-width: 350px;}
         #toast-msg.hidden { opacity: 0; transform: translate(-50%, 20px); }
         .toast-error { background: #d93025 !important; }
         .toast-success { background: #10b981 !important; }
@@ -154,7 +156,7 @@
         
         <div id="stats-bar">
             <div>ניסיונות: <span id="attempts-count">0</span></div>
-            <div>רמזים שנלקחו: <span id="hints-count">0</span></div>
+            <div>רמזים: <span id="hints-count">0</span></div>
         </div>
 
         <div id="solved-container"></div>
@@ -187,19 +189,16 @@
     let endGameMessage = "";
     const successMessages = ["הופה!", "הופלה הופלה הופלה", "ז'ז'ז'ז'ז''וווופ"];
 
-    // פונקציית הודעות מתקדמת (סוג: שגיאה, הצלחה, רמז) - מוצגת ל-3 שניות
     let toastTimeout;
     function showToast(msg, type = "error") {
         const toast = document.getElementById('toast-msg');
         toast.innerText = msg;
-        toast.className = ''; // ניקוי מחלקות קודמות
+        toast.className = ''; 
         if (type === "error") toast.classList.add('toast-error');
         if (type === "success") toast.classList.add('toast-success');
         if (type === "hint") toast.classList.add('toast-hint');
         
         if (toastTimeout) clearTimeout(toastTimeout);
-        
-        // 3000 מילי-שניות = 3 שניות
         toastTimeout = setTimeout(() => toast.classList.add('hidden'), 3000);
     }
 
@@ -215,7 +214,7 @@
             let catInput = g.querySelector('.cat');
             let diff = g.querySelector('.diff').value;
             let wordInputs = g.querySelectorAll('.word');
-            let hint = g.querySelector('.hint').value.trim(); // איסוף הרמז
+            let hint = g.querySelector('.hint').value.trim();
             
             let cat = catInput.value.trim();
             if (!cat) {
@@ -238,7 +237,7 @@
             });
 
             if (cat && words.length === 4) {
-                data.push({ c: cat, d: diff, w: words, h: hint }); // שמירת הרמז
+                data.push({ c: cat, d: diff, w: words, h: hint }); 
             }
         });
 
@@ -331,9 +330,7 @@
         }
     }
     
-    // פונקציית רמז
     function getHint() {
-        // מחפש את כל הקבוצות שעוד לא נפתרו ושמוגדר להן רמז
         const availableHintsGroups = gameData.filter(g => g.h && g.h !== "");
         
         if (availableHintsGroups.length === 0) {
@@ -341,7 +338,6 @@
             return;
         }
         
-        // בחירת רמז אקראי מתוך הקבוצות הזמינות
         const randomGroup = availableHintsGroups[Math.floor(Math.random() * availableHintsGroups.length)];
         
         hintsCount++;
@@ -374,7 +370,6 @@
             selected = [];
             renderGrid();
             
-            // הודעת הצלחה אקראית
             const randomSuccess = successMessages[Math.floor(Math.random() * successMessages.length)];
             showToast("✨ " + randomSuccess, "success");
             
@@ -383,13 +378,12 @@
                     document.getElementById('game-board-area').classList.add('hidden');
                     document.getElementById('victory-screen').classList.remove('hidden');
                     
-                    // הוספנו את המידע על הרמזים לסטטיסטיקה בסוף
                     let statsText = `סיימתם את הלוח ב-${attemptsCount} ניסיונות!`;
                     if (hintsCount > 0) statsText += ` (השתמשתם ב-${hintsCount} רמזים)`;
                     document.getElementById('victory-stats').innerText = statsText;
                     
                     document.getElementById('victory-msg').innerText = endGameMessage;
-                }, 1500); // מחכה קצת כדי שיראו את ההודעה הצלחה לפני שעוברים למסך ניצחון
+                }, 1500); 
             }
         } else {
             selected = [];
