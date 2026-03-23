@@ -35,7 +35,7 @@
         #game-screen { width: 100%; max-width: 500px; }
         #game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .game-btn { padding: 8px 15px; border: 1px solid #333; border-radius: 20px; background: white; cursor: pointer; font-weight: bold; }
-        #attempts { color: #d93025; font-weight: bold; }
+        #attempts { color: #333; font-weight: bold; }
         
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .cell { background: #93c5fd; color: black; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: bold; border-radius: 8px; cursor: pointer; user-select: none; font-size: 14px; padding: 2px;}
@@ -119,7 +119,7 @@
     <div id="game-header">
         <button class="game-btn" onclick="renderGrid()">🔀 ערבוב</button>
         <button class="game-btn" onclick="checkSelected()">✈ בדיקה</button>
-        <div id="attempts">ניסיונות: <span id="lives">5</span></div>
+        <div id="attempts">מספר ניסיונות: <span id="attempts-count">0</span></div>
     </div>
 
     <div id="solved-container"></div>
@@ -137,7 +137,7 @@
     let gameData = [];
     let solvedData = [];
     let selected = [];
-    let lives = 5;
+    let attemptsCount = 0; // הוספנו משתנה שסופר את הניסיונות
 
     function generateLink() {
         const groups = document.querySelectorAll('.group');
@@ -147,7 +147,6 @@
         const errorMsg = document.getElementById('error-msg');
         errorMsg.classList.add('hidden');
 
-        // בדיקה צבעונית לכל השדות
         groups.forEach(g => {
             let catInput = g.querySelector('.cat');
             let diff = g.querySelector('.diff').value;
@@ -210,8 +209,8 @@
         gameData = data;
         solvedData = [];
         selected = [];
-        lives = 5;
-        document.getElementById('lives').innerText = lives;
+        attemptsCount = 0; // איפוס מונה הניסיונות
+        document.getElementById('attempts-count').innerText = attemptsCount;
         
         document.getElementById('admin-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
@@ -257,7 +256,11 @@
     }
 
     function checkSelected() {
-        if (selected.length !== 4) return;
+        if (selected.length !== 4) return; // מבצע בדיקה רק אם סומנו בדיוק 4 מילים
+
+        // מעלה את מונה הניסיונות
+        attemptsCount++;
+        document.getElementById('attempts-count').innerText = attemptsCount;
 
         let matchIndex = -1;
         for (let i = 0; i < gameData.length; i++) {
@@ -271,20 +274,15 @@
             gameData.splice(matchIndex, 1);
             selected = [];
             renderGrid();
-            if (gameData.length === 0) setTimeout(() => alert('כל הכבוד! ניצחתם! 🏆'), 300);
+            if (gameData.length === 0) {
+                // הודעת ניצחון שכוללת את מספר הניסיונות
+                setTimeout(() => alert(`כל הכבוד! ניצחתם! 🏆\nסיימתם את הלוח ב-${attemptsCount} ניסיונות.`), 300);
+            }
         } else {
-            lives--;
-            document.getElementById('lives').innerText = lives;
             selected = [];
             renderGrid();
-            if (lives === 0) {
-                setTimeout(() => { 
-                    alert('נגמרו הניסיונות! 😢'); 
-                    window.location.href = window.location.pathname; 
-                }, 300);
-            } else {
-                alert('טעות, נסו שוב!');
-            }
+            // ההודעה החדשה לטעות!
+            setTimeout(() => alert('טעות! איזה מצחיקה את....'), 100);
         }
     }
 
