@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק מה הקשר - הגדרת משחק</title>
+    <title>משחק מה הקשר - קשרים אישיים</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; color: #333; box-sizing: border-box;}
-        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; overflow: hidden;}
         h1 { text-align: center; color: #1a1a1a; margin-top: 0; }
         p.subtitle { text-align: center; color: #666; margin-bottom: 25px; }
         
@@ -18,7 +18,9 @@
         .group-orange { border-right: 5px solid #fb923c; }
         .group-red { border-right: 5px solid #ef4444; }
 
-        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; font-family: inherit; transition: border 0.2s;}
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; font-family: inherit; transition: border 0.2s;}
+        textarea { resize: vertical; min-height: 80px; }
+        
         .words-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
         #create-btn { background: #3498db; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s; }
@@ -34,14 +36,16 @@
         /* --- GAME SCREEN STYLES --- */
         #game-screen { width: 100%; max-width: 500px; }
         #game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .game-btn { padding: 8px 15px; border: 1px solid #333; border-radius: 20px; background: white; cursor: pointer; font-weight: bold; }
+        .game-btn { padding: 8px 15px; border: 1px solid #333; border-radius: 20px; background: white; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .game-btn:hover { background: #f0f0f0; }
         #attempts { color: #333; font-weight: bold; }
         
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .cell { background: #93c5fd; color: black; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: bold; border-radius: 8px; cursor: pointer; user-select: none; font-size: 14px; padding: 2px;}
+        .cell { background: #93c5fd; color: black; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: bold; border-radius: 8px; cursor: pointer; user-select: none; font-size: 14px; padding: 2px; transition: transform 0.1s;}
+        .cell:active { transform: scale(0.95); }
         .cell.selected { background: #4b5563; color: white; }
         
-        .solved-group { grid-column: span 4; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
+        .solved-group { grid-column: span 4; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; animation: popIn 0.3s ease-out;}
         .solved-cat { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
         .solved-words { font-size: 14px; }
         
@@ -49,13 +53,24 @@
         .bg-yellow { background: #fef08a; color: #854d0e; }
         .bg-orange { background: #fed7aa; color: #9a3412; }
         .bg-red { background: #fecaca; color: #991b1b; }
+
+        /* הודעת שגיאה קופצת שנעלמת (Toast) */
+        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #d93025; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: opacity 0.3s, transform 0.3s; pointer-events: none; }
+        #toast-msg.hidden { opacity: 0; transform: translate(-50%, 20px); }
+
+        /* מסך סיום */
+        #victory-screen { text-align: center; padding: 30px 10px; }
+        #victory-screen h2 { color: #10b981; font-size: 28px; margin-bottom: 10px;}
+        #victory-msg { background: #fdf2f8; border: 2px dashed #ec4899; padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 18px; font-weight: bold; color: #831843; white-space: pre-wrap;}
+
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
 
 <div id="admin-screen" class="container">
     <h1>הגדרה: "מה הקשר?"</h1>
-    <p class="subtitle">אמא, מלאי 4 קבוצות של 4 מילים והקשר ביניהן:</p>
+    <p class="subtitle">אמא, מלאי 4 קבוצות של 4 מילים, ואז כתבי הודעת סיום:</p>
 
     <div class="group group-green">
         <h2>קבוצה 1 (קשר קל - ירוק)</h2>
@@ -105,30 +120,46 @@
         </div>
     </div>
 
+    <div class="group" style="border: 2px solid #3498db; background: #ebf5fb;">
+        <h2>🎉 הודעת סיום אישית:</h2>
+        <textarea id="end-message" placeholder="הטקסט שיופיע כשהם ינצחו את המשחק. אפשר לכתוב פה ברכה ארוכה ומפורטת..."></textarea>
+    </div>
+
     <div id="error-msg" class="hidden"></div>
     <button id="create-btn" onclick="generateLink()">צור לינק למשחק!</button>
 
     <div id="link-section" class="hidden">
         <div>הלינק מוכן! לחצי עליו כדי להעתיק, ושלחי אותו לשחקנים:</div>
-        <input type="text" id="final-url" readonly onclick="this.select(); document.execCommand('copy'); alert('הלינק הועתק!');">
-        <button class="game-btn" style="margin-top:10px; width:100%; background:#4caf50; color:white; border:none;" onclick="startFromCurrent()">התחל לשחק מכאן (מבלי לשלוח לינק)</button>
+        <input type="text" id="final-url" readonly onclick="this.select(); document.execCommand('copy'); showToast('הלינק הועתק בהצלחה!');">
+        <button class="game-btn" style="margin-top:10px; width:100%; background:#4caf50; color:white; border:none; padding:15px;" onclick="startFromCurrent()">התחל לשחק מכאן (מבלי לשלוח לינק)</button>
     </div>
 </div>
 
 <div id="game-screen" class="container hidden">
-    <div id="game-header">
-        <button class="game-btn" onclick="renderGrid()">🔀 ערבוב</button>
-        <button class="game-btn" onclick="checkSelected()">✈ בדיקה</button>
-        <div id="attempts">מספר ניסיונות: <span id="attempts-count">0</span></div>
+    <div id="game-board-area">
+        <div id="game-header">
+            <button class="game-btn" onclick="renderGrid()">🔀 ערבוב</button>
+            <button class="game-btn" onclick="checkSelected()">✈ בדיקה</button>
+            <div id="attempts">מספר ניסיונות: <span id="attempts-count">0</span></div>
+        </div>
+
+        <div id="solved-container"></div>
+        <div class="grid" id="play-grid"></div>
+
+        <p style="color:#666; font-size:12px; font-weight:bold; text-align:center; margin-top:20px;">
+            מצאו 4 מילים קשורות, סמנו אותן ולחצו בדיקה
+        </p>
     </div>
 
-    <div id="solved-container"></div>
-    <div class="grid" id="play-grid"></div>
-
-    <p style="color:#d93025; font-size:12px; font-weight:bold; text-align:center; margin-top:20px;">
-        מצאו 4 מילים קשורות במכנה משותף, סמנו אותן ולחצו בדיקה
-    </p>
+    <div id="victory-screen" class="hidden">
+        <h2>🏆 כל הכבוד! 🏆</h2>
+        <p id="victory-stats" style="font-size: 16px; color: #555;"></p>
+        <div id="victory-msg"></div>
+        <button class="game-btn" style="margin-top:20px; width:100%; padding:15px;" onclick="window.location.href = window.location.pathname;">צור משחק חדש</button>
+    </div>
 </div>
+
+<div id="toast-msg" class="hidden"></div>
 
 <script>
     function utoa(str) { return window.btoa(unescape(encodeURIComponent(str))); }
@@ -137,10 +168,19 @@
     let gameData = [];
     let solvedData = [];
     let selected = [];
-    let attemptsCount = 0; // הוספנו משתנה שסופר את הניסיונות
+    let attemptsCount = 0;
+    let endGameMessage = "";
+
+    // פונקציה שמציגה הודעה קופצת ונעלמת
+    function showToast(msg) {
+        const toast = document.getElementById('toast-msg');
+        toast.innerText = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2000);
+    }
 
     function generateLink() {
-        const groups = document.querySelectorAll('.group');
+        const groups = document.querySelectorAll('.group:not(:last-of-type)'); // כל הקבוצות חוץ מההודעה
         let data = [];
         let valid = true;
         
@@ -183,33 +223,43 @@
             return;
         }
 
+        const msgInput = document.getElementById('end-message').value.trim();
+        const payload = { groups: data, endMsg: msgInput };
+
         try {
-            const encoded = utoa(JSON.stringify(data));
+            const encoded = utoa(JSON.stringify(payload));
             const url = window.location.origin + window.location.pathname + "?q=" + encoded;
             
             document.getElementById('final-url').value = url;
             document.getElementById('link-section').classList.remove('hidden');
             
-            window.tempGameData = data; 
+            window.tempGamePayload = payload; 
         } catch (error) {
             errorMsg.innerText = 'הייתה בעיה ביצירת הקישור. נסה לרענן את העמוד.';
             errorMsg.classList.remove('hidden');
-            console.error(error);
         }
     }
 
     function startFromCurrent() {
-        if(window.tempGameData) {
-            initGame(window.tempGameData);
+        if(window.tempGamePayload) {
+            initGame(window.tempGamePayload);
             window.history.pushState({}, document.title, window.location.pathname);
         }
     }
 
-    function initGame(data) {
-        gameData = data;
+    function initGame(payload) {
+        // תמיכה בגרסאות ישנות של הלינק (אם שומרים לינק ישן)
+        if (Array.isArray(payload)) {
+            gameData = payload;
+            endGameMessage = "כל הכבוד! סיימתם את המשחק בהצלחה!";
+        } else {
+            gameData = payload.groups;
+            endGameMessage = payload.endMsg || "כל הכבוד! סיימתם את המשחק בהצלחה!";
+        }
+
         solvedData = [];
         selected = [];
-        attemptsCount = 0; // איפוס מונה הניסיונות
+        attemptsCount = 0;
         document.getElementById('attempts-count').innerText = attemptsCount;
         
         document.getElementById('admin-screen').classList.add('hidden');
@@ -256,16 +306,22 @@
     }
 
     function checkSelected() {
-        if (selected.length !== 4) return; // מבצע בדיקה רק אם סומנו בדיוק 4 מילים
+        if (selected.length !== 4) return;
 
-        // מעלה את מונה הניסיונות
         attemptsCount++;
         document.getElementById('attempts-count').innerText = attemptsCount;
 
         let matchIndex = -1;
+        let maxOverlap = 0; // משתנה שיבדוק כמה ניחשו נכון מקבוצה בודדת
+
+        // בדיקת ההתאמה והחפיפה הגבוהה ביותר
         for (let i = 0; i < gameData.length; i++) {
-            if (gameData[i].w.every(w => selected.includes(w))) {
-                matchIndex = i; break;
+            let overlap = gameData[i].w.filter(w => selected.includes(w)).length;
+            if (overlap > maxOverlap) {
+                maxOverlap = overlap;
+            }
+            if (overlap === 4) {
+                matchIndex = i;
             }
         }
 
@@ -274,15 +330,29 @@
             gameData.splice(matchIndex, 1);
             selected = [];
             renderGrid();
+            
+            // בדיקת ניצחון
             if (gameData.length === 0) {
-                // הודעת ניצחון שכוללת את מספר הניסיונות
-                setTimeout(() => alert(`כל הכבוד! ניצחתם! 🏆\nסיימתם את הלוח ב-${attemptsCount} ניסיונות.`), 300);
+                setTimeout(() => {
+                    document.getElementById('game-board-area').classList.add('hidden');
+                    document.getElementById('victory-screen').classList.remove('hidden');
+                    document.getElementById('victory-stats').innerText = `סיימתם את הלוח ב-${attemptsCount} ניסיונות!`;
+                    document.getElementById('victory-msg').innerText = endGameMessage;
+                }, 300);
             }
         } else {
             selected = [];
             renderGrid();
-            // ההודעה החדשה לטעות!
-            setTimeout(() => alert('טעות! איזה מצחיקה את....'), 100);
+            
+            // הרכבת הודעת השגיאה בהתאם לכמות הניחושים הנכונים
+            let errorText = "טעות! איזה מצחיקה את....";
+            if (maxOverlap === 3) {
+                errorText += " (3/4)";
+            } else if (maxOverlap === 2) {
+                errorText += " (2/4)";
+            }
+            
+            showToast(errorText);
         }
     }
 
