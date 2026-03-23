@@ -89,4 +89,213 @@
             <input type="text" class="word" placeholder="מילה 1">
             <input type="text" class="word" placeholder="מילה 2">
             <input type="text" class="word" placeholder="מילה 3">
-            <input type="text" class="word" placeholder
+            <input type="text" class="word" placeholder="מילה 4">
+        </div>
+    </div>
+
+    <div class="group group-red">
+        <h2>קבוצה 4 (קשה - אדום)</h2>
+        <input type="hidden" class="diff" value="red">
+        <input type="text" class="cat" placeholder="מה הקשר?">
+        <div class="words-container">
+            <input type="text" class="word" placeholder="מילה 1">
+            <input type="text" class="word" placeholder="מילה 2">
+            <input type="text" class="word" placeholder="מילה 3">
+            <input type="text" class="word" placeholder="מילה 4">
+        </div>
+    </div>
+
+    <div id="error-msg" class="hidden"></div>
+    <button id="create-btn" onclick="generateLink()">צור לינק למשחק!</button>
+
+    <div id="link-section" class="hidden">
+        <div>הלינק מוכן! לחצי עליו כדי להעתיק, ושלחי אותו לשחקנים:</div>
+        <input type="text" id="final-url" readonly onclick="this.select(); document.execCommand('copy'); alert('הלינק הועתק!');">
+        <button class="game-btn" style="margin-top:10px; width:100%; background:#4caf50; color:white; border:none;" onclick="startFromCurrent()">התחל לשחק מכאן (מבלי לשלוח לינק)</button>
+    </div>
+</div>
+
+<div id="game-screen" class="container hidden">
+    <div id="game-header">
+        <button class="game-btn" onclick="renderGrid()">🔀 ערבוב</button>
+        <button class="game-btn" onclick="checkSelected()">✈ בדיקה</button>
+        <div id="attempts">ניסיונות: <span id="lives">5</span></div>
+    </div>
+
+    <div id="solved-container"></div>
+    <div class="grid" id="play-grid"></div>
+
+    <p style="color:#d93025; font-size:12px; font-weight:bold; text-align:center; margin-top:20px;">
+        מצאו 4 מילים קשורות במכנה משותף, סמנו אותן ולחצו בדיקה
+    </p>
+</div>
+
+<script>
+    function utoa(str) { return window.btoa(unescape(encodeURIComponent(str))); }
+    function atou(str) { return decodeURIComponent(escape(window.atob(str))); }
+
+    let gameData = [];
+    let solvedData = [];
+    let selected = [];
+    let lives = 5;
+
+    function generateLink() {
+        const groups = document.querySelectorAll('.group');
+        let data = [];
+        let valid = true;
+        
+        const errorMsg = document.getElementById('error-msg');
+        errorMsg.classList.add('hidden');
+
+        // בדיקה צבעונית לכל השדות
+        groups.forEach(g => {
+            let catInput = g.querySelector('.cat');
+            let diff = g.querySelector('.diff').value;
+            let wordInputs = g.querySelectorAll('.word');
+            
+            let cat = catInput.value.trim();
+            if (!cat) {
+                valid = false;
+                catInput.style.border = '2px solid red';
+            } else {
+                catInput.style.border = '1px solid #ccc';
+            }
+
+            let words = [];
+            wordInputs.forEach(wInput => {
+                let w = wInput.value.trim();
+                if (!w) {
+                    valid = false;
+                    wInput.style.border = '2px solid red';
+                } else {
+                    wInput.style.border = '1px solid #ccc';
+                    words.push(w);
+                }
+            });
+
+            if (cat && words.length === 4) {
+                data.push({ c: cat, d: diff, w: words });
+            }
+        });
+
+        if (!valid) {
+            errorMsg.innerText = 'שכחת למלא כמה שדות! (הם מסומנים באדום)';
+            errorMsg.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const encoded = utoa(JSON.stringify(data));
+            const url = window.location.origin + window.location.pathname + "?q=" + encoded;
+            
+            document.getElementById('final-url').value = url;
+            document.getElementById('link-section').classList.remove('hidden');
+            
+            window.tempGameData = data; 
+        } catch (error) {
+            errorMsg.innerText = 'הייתה בעיה ביצירת הקישור. נסה לרענן את העמוד.';
+            errorMsg.classList.remove('hidden');
+            console.error(error);
+        }
+    }
+
+    function startFromCurrent() {
+        if(window.tempGameData) {
+            initGame(window.tempGameData);
+            window.history.pushState({}, document.title, window.location.pathname);
+        }
+    }
+
+    function initGame(data) {
+        gameData = data;
+        solvedData = [];
+        selected = [];
+        lives = 5;
+        document.getElementById('lives').innerText = lives;
+        
+        document.getElementById('admin-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        
+        renderGrid();
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('play-grid');
+        const solvedDiv = document.getElementById('solved-container');
+        grid.innerHTML = '';
+        solvedDiv.innerHTML = '';
+
+        solvedData.forEach(g => {
+            const div = document.createElement('div');
+            div.className = `solved-group bg-${g.d}`;
+            div.innerHTML = `<div class="solved-cat">${g.c}</div><div class="solved-words">${g.w.join(', ')}</div>`;
+            solvedDiv.appendChild(div);
+        });
+
+        let words = [];
+        gameData.forEach(g => words.push(...g.w));
+        words.sort(() => Math.random() - 0.5); 
+
+        words.forEach(w => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerText = w;
+            cell.onclick = () => toggleSelect(cell, w);
+            if (selected.includes(w)) cell.classList.add('selected');
+            grid.appendChild(cell);
+        });
+    }
+
+    function toggleSelect(cell, word) {
+        if (selected.includes(word)) {
+            selected = selected.filter(x => x !== word);
+            cell.classList.remove('selected');
+        } else if (selected.length < 4) {
+            selected.push(word);
+            cell.classList.add('selected');
+        }
+    }
+
+    function checkSelected() {
+        if (selected.length !== 4) return;
+
+        let matchIndex = -1;
+        for (let i = 0; i < gameData.length; i++) {
+            if (gameData[i].w.every(w => selected.includes(w))) {
+                matchIndex = i; break;
+            }
+        }
+
+        if (matchIndex > -1) {
+            solvedData.push(gameData[matchIndex]);
+            gameData.splice(matchIndex, 1);
+            selected = [];
+            renderGrid();
+            if (gameData.length === 0) setTimeout(() => alert('כל הכבוד! ניצחתם! 🏆'), 300);
+        } else {
+            lives--;
+            document.getElementById('lives').innerText = lives;
+            selected = [];
+            renderGrid();
+            if (lives === 0) {
+                setTimeout(() => { 
+                    alert('נגמרו הניסיונות! 😢'); 
+                    window.location.href = window.location.pathname; 
+                }, 300);
+            } else {
+                alert('טעות, נסו שוב!');
+            }
+        }
+    }
+
+    window.onload = () => {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('q');
+        if (q) {
+            try { initGame(JSON.parse(atou(q))); } 
+            catch(e) { console.error('Link error'); }
+        }
+    };
+</script>
+</body>
+</html>
